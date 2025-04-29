@@ -11,17 +11,18 @@ services:
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - VITE_NEST_API_URL=http://localhost:3000
+      - API_URL=http://localhost:3000
 
   ########################################## BACKEND NEST (Dev) ###########################################
   nest:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: express-api-dev
     ports:
       - "3000:3000"
     volumes:
       - ./backend:/app
       - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+    env_file:
+      - ./backend/.env
