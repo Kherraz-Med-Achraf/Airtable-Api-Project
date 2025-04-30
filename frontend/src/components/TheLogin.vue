@@ -1,5 +1,11 @@
 <template>
   <div class="login-container">
+    <span
+      class="material-symbols-outlined back-button"
+      @click="$router.push('/')"
+    >
+      arrow_circle_left
+    </span>
     <div class="login-card">
       <div class="logo">
         <img :src="logo" alt="Logo" class="logo-image" />
@@ -53,8 +59,8 @@ import logo from "../assets/19682.png";
 
 const email = ref("");
 const password = ref("");
-const emailError = ref("L'email est requis");
-const passwordError = ref("cdsd");
+const emailError = ref("");
+const passwordError = ref("");
 const isLoading = ref(false);
 
 const handleLogin = async () => {
@@ -190,11 +196,11 @@ form {
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
-  
+
     &:hover {
       background-color: #38dae9;
     }
-  
+
     &:disabled {
       opacity: 0.7;
       cursor: not-allowed;
@@ -212,6 +218,25 @@ form {
     &:hover {
       text-decoration: underline;
     }
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 32px;
+  color: #3fefff;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    color: #38dae9;
+    transform: scale(1.2);
   }
 }
 </style>

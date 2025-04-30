@@ -1,77 +1,87 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import { useRouter } from "vue-router";
 
-// Sample project data
-const projects = ref([
-  {
-    id: 1,
-    title: "Système de Gestion de Données Environnementales",
-    description:
-      "Une application web pour collecter, analyser et visualiser des données environnementales en temps réel.",
-    image: "https://example.com/images/project1.jpg",
-    students: ["Marie Dupont", "Thomas Laurent"],
-    technologies: ["Vue.js", "Node.js", "MongoDB", "D3.js"],
-    likes: 42,
-  },
-  {
-    id: 2,
-    title: "Plateforme IoT pour Smart Buildings",
-    description:
-      "Solution connectée pour optimiser la consommation énergétique des bâtiments avec des capteurs IoT.",
-    image: "https://example.com/images/project2.jpg",
-    students: ["Sophie Martin", "Alexandre Dubois", "Emma Moreau"],
-    technologies: ["React", "AWS", "Python", "Raspberry Pi"],
-    likes: 38,
-  },
-  {
-    id: 3,
-    title: "Système Automatisé de Production",
-    description:
-      "Conception et implémentation d'un système de contrôle automatisé pour une chaîne de production industrielle.",
-    image: "https://example.com/images/project3.jpg",
-    students: ["Lucas Bernard", "Camille Petit"],
-    technologies: ["PLC", "SCADA", "C++", "HMI"],
-    likes: 27,
-  },
-]);
+const router = useRouter();
+const projects = ref([]);
+const isLoading = ref(false);
+const error = ref(null);
 
-// Function to increment likes for a project
-const likeProject = (projectId) => {
-  const project = projects.value.find((p) => p.id === projectId);
-  if (project) {
-    project.likes++;
+// Récupère l’URL de l’API depuis l’env
+const apiUrl = import.meta.env.VITE_API_URL;
+
+// Charger la liste des projets publiés
+const fetchProjects = async () => {
+  isLoading.value = true;
+  error.value = null;
+  try {
+    const res = await axios.get(`${apiUrl}/projects`);
+    // votre backend renvoie [{ id, fields:{…} }, …]
+    projects.value = res.data.map((p) => ({
+      id: p.id,
+      title: p.fields.Titre,
+      description: p.fields.Description,
+      image: p.fields.Images?.[0]?.url || "",
+      students: p.fields.Étudiants || [],
+      technologies: p.fields.Technologies || [],
+      likes: p.fields.Likes || 0,
+    }));
+  } catch (e) {
+    console.error(e);
+    error.value = "Impossible de charger les projets";
+  } finally {
+    isLoading.value = false;
   }
 };
+
+// Incrémente le like en appelant votre API
+const likeProject = async (projectId) => {
+  try {
+    const res = await axios.post(`${apiUrl}/projects/${projectId}/like`);
+    // mettre à jour le compteur local
+    const p = projects.value.find((p) => p.id === projectId);
+    if (p) p.likes = res.data.likes;
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+// Au montage du composant
+onMounted(fetchProjects);
 </script>
 
 <template>
   <div>
+    <span
+      class="material-symbols-outlined login"
+      @click="router.push('/login')"
+    >
+      account_circle
+    </span>
+
     <h1>Portfolio Web Ingénierie</h1>
-    <div class="portfolio-container">
+
+    <div v-if="isLoading">Chargement…</div>
+    <div v-else-if="error">{{ error }}</div>
+    <div v-else class="portfolio-container">
       <div class="projects-grid">
         <div v-for="project in projects" :key="project.id" class="project-card">
           <img
+            v-if="project.image"
             :src="project.image"
             :alt="project.title"
             class="project-image"
           />
-
           <div class="project-info">
             <h2 class="project-title">{{ project.title }}</h2>
             <p class="project-description">{{ project.description }}</p>
-
             <div class="project-students">
               <span>Réalisé par: </span>
-              <span
-                v-for="(student, index) in project.students"
-                :key="index"
-                class="student-name"
-              >
-                {{ student
-                }}{{ index < project.students.length - 1 ? ", " : "" }}
+              <span v-for="(s, i) in project.students" :key="i">
+                {{ s }}<span v-if="i < project.students.length - 1">, </span>
               </span>
             </div>
-
             <div class="project-technologies">
               <span
                 v-for="tech in project.technologies"
@@ -81,7 +91,6 @@ const likeProject = (projectId) => {
                 {{ tech }}
               </span>
             </div>
-
             <div class="project-likes">
               <button @click="likeProject(project.id)" class="like-button">
                 ❤️ {{ project.likes }}
@@ -95,6 +104,21 @@ const likeProject = (projectId) => {
 </template>
 
 <style scoped lang="scss">
+.login {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 42px;
+  color: #3fefff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #35cddb;
+    transform: scale(1.2);
+  }
+}
+
 // Variables
 $primary-color: #3498db;
 $secondary-color: #2c3e50;
