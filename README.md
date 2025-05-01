@@ -34,8 +34,8 @@ Il s'agit d'un **portfolio web** pour présenter les projets étudiants de la fi
 
 1. **Cloner le dépôt**  
      ```bash
-     git clone https://github.com/ton-org/portfolio-web-ingenierie.git
-     cd portfolio-web-ingenierie
+     git clone https://github.com/Kherraz-Med-Achraf/Airtable-Api-Project.git
+     cd Airtable-Api-Project
      ```
 
 2. **.env déjà présent**  
