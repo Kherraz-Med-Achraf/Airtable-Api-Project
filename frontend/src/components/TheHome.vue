@@ -3,43 +3,32 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 
+import defaultImage from "../assets/project.jpg"
+
 const router = useRouter();
 const projects = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
 
-// Récupère l’URL de l’API depuis l’env
 const apiUrl = import.meta.env.VITE_API_URL;
 
-// Charger la liste des projets publiés
-const fetchProjects = async () => {
+async function fetchProjects() {
   isLoading.value = true;
   error.value = null;
   try {
-    const res = await axios.get(`${apiUrl}/projects`);
-    // votre backend renvoie [{ id, fields:{…} }, …]
-    projects.value = res.data.map((p) => ({
-      id: p.id,
-      title: p.fields.Titre,
-      description: p.fields.Description,
-      image: p.fields.Images?.[0]?.url || "",
-      students: p.fields.Étudiants || [],
-      technologies: p.fields.Technologies || [],
-      likes: p.fields.Likes || 0,
-    }));
+    const { data } = await axios.get(`${apiUrl}/projects`);
+    projects.value = data; 
   } catch (e) {
-    console.error(e);
     error.value = "Impossible de charger les projets";
+    console.error(e);
   } finally {
     isLoading.value = false;
   }
-};
+}
 
-// Incrémente le like en appelant votre API
 const likeProject = async (projectId) => {
   try {
     const res = await axios.post(`${apiUrl}/projects/${projectId}/like`);
-    // mettre à jour le compteur local
     const p = projects.value.find((p) => p.id === projectId);
     if (p) p.likes = res.data.likes;
   } catch (e) {
@@ -47,7 +36,6 @@ const likeProject = async (projectId) => {
   }
 };
 
-// Au montage du composant
 onMounted(fetchProjects);
 </script>
 
@@ -71,6 +59,12 @@ onMounted(fetchProjects);
             v-if="project.image"
             :src="project.image"
             :alt="project.title"
+            class="project-image"
+          />
+          <img
+            v-else
+            :src="defaultImage"
+            alt="Placeholder"
             class="project-image"
           />
           <div class="project-info">
@@ -119,7 +113,6 @@ onMounted(fetchProjects);
   }
 }
 
-// Variables
 $primary-color: #3498db;
 $secondary-color: #2c3e50;
 $accent-color: #e74c3c;
@@ -129,7 +122,6 @@ $text-color: #333333;
 $border-radius: 8px;
 $box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
-// Global styles
 h1 {
   text-align: center;
   color: $secondary-color;
@@ -150,7 +142,6 @@ h1 {
   gap: 2rem;
 }
 
-// Project card styles
 .project-card {
   display: flex;
   flex-direction: column;
@@ -250,7 +241,6 @@ h1 {
   }
 }
 
-// Responsive adjustments
 @media (max-width: 768px) {
   .projects-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

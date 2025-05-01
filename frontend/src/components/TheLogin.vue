@@ -10,6 +10,9 @@
       <div class="logo">
         <img :src="logo" alt="Logo" class="logo-image" />
         <h1>Connectez-vous</h1>
+        <span class="error-message" v-if="generalError">{{
+          generalError
+        }}</span>
       </div>
       <form @submit.prevent="handleLogin">
         <div class="form-group" :class="{ error: emailError }">
@@ -55,49 +58,48 @@
 
 <script setup>
 import { ref } from "vue";
+import axios from "axios";
+import { useRouter } from "vue-router";
 import logo from "../assets/19682.png";
 
 const email = ref("");
 const password = ref("");
+const generalError = ref("");
 const emailError = ref("");
 const passwordError = ref("");
 const isLoading = ref(false);
+const router = useRouter();
 
 const handleLogin = async () => {
-  // Reset errors
+  generalError.value = "";
   emailError.value = "";
   passwordError.value = "";
-
-  // Basic validation
-  if (!email.value) {
-    emailError.value = "L'email est requis";
-    return;
-  }
-
-  if (!password.value) {
-    passwordError.value = "Le mot de passe est requis";
-    return;
-  }
-
+  isLoading.value = true;
   try {
-    isLoading.value = true;
+    const { data } = await axios.post(
+      `${import.meta.env.VITE_API_URL}/auth/login`,
+      { email: email.value, password: password.value }
+    );
+    localStorage.setItem("token", data.access_token);
 
-    // Implement your login logic here
-    // For example:
-    // await login(email.value, password.value);
+    axios.defaults.headers.common[
+      "Authorization"
+    ] = `Bearer ${data.access_token}`;
 
-    console.log("Tentative de connexion avec:", {
-      email: email.value,
-      password: password.value,
-    });
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // If successful, you might want to redirect or emit an event
-  } catch (error) {
-    console.error("Erreur de connexion:", error);
-    // Handle error appropriately
+    router.push("/admin");
+  } catch (err) {
+    if (err.response && err.response.status === 401) {
+      const msg = err.response.data.error;
+      generalError.value = msg;
+      if (msg.includes("Utilisateur")) {
+        emailError.value = "Cet email n’est pas enregistré.";
+      }
+      if (msg.includes("Mot de passe")) {
+        passwordError.value = "Mot de passe incorrect.";
+      }
+    } else {
+      passwordError.value = "Une erreur est survenue, réessayez plus tard.";
+    }
   } finally {
     isLoading.value = false;
   }
@@ -177,13 +179,6 @@ form {
     &.error input {
       border-color: #dc2626;
     }
-
-    .error-message {
-      display: block;
-      color: #dc2626;
-      font-size: 0.875rem;
-      margin-top: 0.5rem;
-    }
   }
   .login-button {
     width: 100%;
@@ -206,6 +201,12 @@ form {
       cursor: not-allowed;
     }
   }
+}
+.error-message {
+  display: block;
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
 }
 .contact-info {
   text-align: center;
